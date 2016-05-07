@@ -22,10 +22,10 @@ class TwitterConsumer:
         self.logger.setLevel(logging.WARNING)
         self.topics = topics
         #self.topics = 'docker,devops,#F1,coreos,#AWS,@Docker,@awscloud,@LewisHamilton'
-        self.twitter_access_token = '809943810-MesHqyhFZEBu0AjYVx4d9MyQQG1SrsE6GSOSgEP9'
-        self.twitter_access_secret = 'jS0gg3ZU2UOrc4tiNoGrrzLt91wW8wmzbt9XMM8MuqNtt'
-        self.twitter_consumer_key = '4PxEjeKeNJyYH27vcNBFIBKBW'
-        self.twitter_consumer_secret = 'GDIreQXMCOndTiJTJeve97Vy3sXg3IbCCc7iQ42RtaPmrGb0XJ'
+        self.twitter_access_token = os.environ.get('TWITTER_ACCESS_TOKEN', '')
+        self.twitter_access_secret = os.environ.get('TWITTER_ACCESS_SECRET', '')
+        self.twitter_consumer_key = os.environ.get('TWITTER_CONSUMER_KEY', '')
+        self.twitter_consumer_secret = os.environ.get('TWITTER_CONSUMER_SECRET','')
 
     def process_tweets(self):
         """
