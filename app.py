@@ -1,9 +1,10 @@
 #!/usr/bin/env python
-from pykafka import KafkaClient
 from twitter import Twitter, OAuth, TwitterHTTPError, TwitterStream
 import sys
 import os
 import logging
+import requests
+from time import sleep
 
 try:
     import json
@@ -21,18 +22,69 @@ class TwitterConsumer:
         self.logger.addHandler(handler)
         self.logger.setLevel(logging.WARNING)
         self.topics = topics
-        #self.topics = 'docker,devops,#F1,coreos,#AWS,@Docker,@awscloud,@LewisHamilton'
-        
-        self.twitter_access_token = os.environ.get('TWITTER_ACCESS_TOKEN', '')
-        self.twitter_access_secret = os.environ.get('TWITTER_ACCESS_SECRET', '')
-        self.twitter_consumer_key = os.environ.get('TWITTER_CONSUMER_KEY', '')
-        self.twitter_consumer_secret = os.environ.get('TWITTER_CONSUMER_SECRET', '')
 
-        while self.twitter_access_token == '' \
-              or self.twitter_access_secret == '' \
-              or self.twitter_consumer_key == '' \
-              or self.twitter_consumer_secret == '':
-            print "Twitter Env not setup"
+        needConfig = True
+        while needConfig:
+            #self.topics = 'docker,devops,#F1,coreos,#AWS,@Docker,@awscloud,@LewisHamilton'
+            self.consul_uri = os.env('CONSUL_URI', 'localhost:8500')
+            self.twitter_access_token = self.consul_get('apps/inkslinger/twitter_access_token').json()
+            self.logger.debug("twitter_access_token: %s" % self.twitter_access_token)
+            self.twitter_access_secret = self.consul_get('apps/inkslinger/twitter_access_secret').json()
+            self.logger.debug("twitter_access_secret: %s" % self.twitter_access_secret)
+            self.twitter_consumer_key = self.consul_get('apps/inkslinger/twitter_consumer_key').json()
+            self.logger.debug("twitter_consumer_key: %s" % self.twitter_consumer_key)
+            self.twitter_consumer_secret = self.consul_get('apps/inkslinger/twitter_consumer_secret').json()
+            self.logger.debug("twitter_consumer_secret: %s" % self.twitter_consumer_secret)
+            err = self._check_health()
+            if len(err) > 0:
+                for error in err:
+                    self.logger.critical("Error: %s" % error)
+                sleep(15)
+            else:
+                needConfig = False
+                self.logger.info("Configuration Checks out, Starting up....")
+
+
+    def _check_health(self):
+        """
+        Application health check
+        Report Missing Settings to logger
+        """
+        err = []
+        if self.twitter_access_token == '':
+            err.append("Missing twitter_access_token")
+        if self.twitter_access_secret == '':
+            err.append("Missing twitter_access_secret")
+        if self.twitter_consumer_key == '':
+            err.append("Missing twitter_consumer_key")
+        if self.twitter_consumer_secret == '':
+            err.append("Missing twitter_consumer_secret")
+        return err
+
+    def giles_get(self, resource, payload=None):
+        """ Perform HTTP GET request against a giles endpoint """
+        # Keeping with service discovery, ask consul for giles endpoint
+        # maybe some kind of wait-lock here?  incase no active giles endpoints?
+        giles_endpoints = self.consul_get('service/giles').json()
+        self.logger.debug("giles_endpoints: %s" % giles_endpoints)
+        self.logger.debug("len(giles_endpoints): %s" % len(giles_endpoints))
+        payload = payload or {}
+        endpoint = '{}/{}/{}'.format(, 'v1', resource)
+        result = requests.get(
+            endpoint,
+            params=payload,
+            headers={'Accept': 'application/json; version=1'})
+
+
+    def consul_get(self, resource, payload=None):
+        """ Perform HTTP GET request against consul endpoint """
+        payload = payload or {}
+        endpoint = '{}/{}/{}'.format(self.consul_uri, 'v1', resource)
+        self.logger.debug("Consule: GET %s" % endpoint)
+        return requests.get(
+            endpoint,
+            params=payload,
+            headers={'Accept': 'application/vnd.consul+json; version=1'})
 
 
     def process_tweets(self):
@@ -56,8 +108,7 @@ def main():
     """
     Main Loop
     """
-    kafka_host = os.getenv('KAFKA_HOST', 'docker:9092')
-    tweeter = TwitterConsumer(kafka_host=kafka_host)
+    tweeter = TwitterConsumer()
     tweeter.process_tweets()
 
 
