@@ -22,15 +22,24 @@ class TwitterConsumer:
         self.logger.setLevel(logging.WARNING)
         self.topics = topics
         #self.topics = 'docker,devops,#F1,coreos,#AWS,@Docker,@awscloud,@LewisHamilton'
+        
         self.twitter_access_token = os.environ.get('TWITTER_ACCESS_TOKEN', '')
         self.twitter_access_secret = os.environ.get('TWITTER_ACCESS_SECRET', '')
         self.twitter_consumer_key = os.environ.get('TWITTER_CONSUMER_KEY', '')
-        self.twitter_consumer_secret = os.environ.get('TWITTER_CONSUMER_SECRET','')
+        self.twitter_consumer_secret = os.environ.get('TWITTER_CONSUMER_SECRET', '')
+
+        while self.twitter_access_token == '' \
+              or self.twitter_access_secret == '' \
+              or self.twitter_consumer_key == '' \
+              or self.twitter_consumer_secret == '':
+            print "Twitter Env not setup"
+
 
     def process_tweets(self):
         """
         Process Twitter Stream API
         """
+        # This could be multi-threaded?
         oauth = OAuth(self.twitter_access_token, self.twitter_access_secret,
                       self.twitter_consumer_key, self.twitter_consumer_secret)
         self.logger.info("Authenticating to Twitter")
