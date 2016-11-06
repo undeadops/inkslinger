@@ -20,7 +20,10 @@ class TwitterConsumer:
             '%(asctime)s %(name)-12s %(levelname)-8s %(message)s')
         handler.setFormatter(formatter)
         self.logger.addHandler(handler)
-        self.logger.setLevel(logging.WARNING)
+
+        loglevel = os.getenv('LOG_LEVEL', 'info')
+
+        self.logger.setLevel(logging.loglevel)
 
         needConfig = True
         while needConfig:
