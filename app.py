@@ -23,14 +23,14 @@ class TwitterConsumer:
 
         loglevel = os.getenv('LOG_LEVEL', 'info')
 
-        self.logger.setLevel(logging.debug)
+        self.logger.setLevel(logging.DEBUG)
 
         needConfig = True
         while needConfig:
             #self.topics = 'docker,devops,#F1,coreos,#AWS,@Docker,@awscloud,@LewisHamilton'
-            self.topics = os.getenv('TOPCIS', False)
+            self.topics = os.getenv('TOPICS', False)
             self.logger.debug("TOPICS: %s" % self.topics)
-            self.twitter_access_token = os.getenv('TWITTER_ACCESS_TOKEN', False)
+            self.twitter_access_key = os.getenv('TWITTER_ACCESS_KEY', False)
             self.logger.debug("twitter_access_token: %s" % self.twitter_access_token)
             self.twitter_access_secret = os.getenv('TWITTER_ACCESS_SECRET', False)
             self.logger.debug("twitter_access_secret: %s" % self.twitter_access_secret)
@@ -56,15 +56,13 @@ class TwitterConsumer:
         Report Missing Settings to logger
         """
         err = []
-        if self.topics:
-            err.append("Missing Topics to Monitor")
-        if self.twitter_access_token:
+        if not self.twitter_access_token:
             err.append("Missing twitter_access_token")
-        if self.twitter_access_secret:
+        if not self.twitter_access_secret:
             err.append("Missing twitter_access_secret")
-        if self.twitter_consumer_key:
+        if not self.twitter_consumer_key:
             err.append("Missing twitter_consumer_key")
-        if self.twitter_consumer_secret:
+        if not self.twitter_consumer_secret:
             err.append("Missing twitter_consumer_secret")
         return err
 
@@ -92,7 +90,7 @@ class TwitterConsumer:
         Process Twitter Stream API
         """
         # This could be multi-threaded?
-        oauth = OAuth(self.twitter_access_token, self.twitter_access_secret,
+        oauth = OAuth(self.twitter_access_key, self.twitter_access_secret,
                       self.twitter_consumer_key, self.twitter_consumer_secret)
         self.logger.info("Authenticating to Twitter")
         twitter_stream = TwitterStream(auth=oauth)
