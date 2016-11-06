@@ -23,7 +23,7 @@ class TwitterConsumer:
 
         loglevel = os.getenv('LOG_LEVEL', 'info')
 
-        self.logger.setLevel(logging.loglevel)
+        self.logger.setLevel(loglevel)
 
         needConfig = True
         while needConfig:
