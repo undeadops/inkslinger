@@ -31,7 +31,7 @@ class TwitterConsumer:
             self.topics = os.getenv('TOPICS', False)
             self.logger.debug("TOPICS: %s" % self.topics)
             self.twitter_access_key = os.getenv('TWITTER_ACCESS_KEY', False)
-            self.logger.debug("twitter_access_token: %s" % self.twitter_access_token)
+            self.logger.debug("twitter_access_key: %s" % self.twitter_access_key)
             self.twitter_access_secret = os.getenv('TWITTER_ACCESS_SECRET', False)
             self.logger.debug("twitter_access_secret: %s" % self.twitter_access_secret)
             self.twitter_consumer_key = os.getenv('TWITTER_CONSUMER_KEY', False)
@@ -56,8 +56,8 @@ class TwitterConsumer:
         Report Missing Settings to logger
         """
         err = []
-        if not self.twitter_access_token:
-            err.append("Missing twitter_access_token")
+        if not self.twitter_access_key:
+            err.append("Missing twitter_access_key")
         if not self.twitter_access_secret:
             err.append("Missing twitter_access_secret")
         if not self.twitter_consumer_key:
@@ -71,17 +71,17 @@ class TwitterConsumer:
         """
         Save Tweet to MongoDB via Giles API
         """
-        headers = {'user-agent': 'inkslinger/0.0.1'}
+        headers = {'user-agent': 'inkslinger/0.0.1', "`Content-type": "application/json"}
         self.logger.debug("Saving Tweet....")
         self.logger.debug(tweet)
         url = "%s/%s" % (self.giles_endpoint, 'posts')
         self.logger.debug("Sending data to %s [PUT]" % url)
         r = requests.post(url, json=tweet, headers=headers)
-        if r.status_code == 200:
+        if r.status_code == 200 or r.status_code == 201:
             return True
         else:
             self.logger.info("Error Saving Tweet")
-            self.logger.info("[%s] - %s" % (status_code, r.raise_for_status()))
+            self.logger.info("[%s] - %s" % (r.status_code, r.raise_for_status()))
             return False
 
 
