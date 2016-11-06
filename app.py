@@ -13,7 +13,7 @@ except ImportError:
 
 
 class TwitterConsumer:
-    def __init__(self, topics):
+    def __init__(self):
         self.logger = logging.getLogger()
         handler = logging.StreamHandler()
         formatter = logging.Formatter(
@@ -21,20 +21,22 @@ class TwitterConsumer:
         handler.setFormatter(formatter)
         self.logger.addHandler(handler)
         self.logger.setLevel(logging.WARNING)
-        self.topics = topics
 
         needConfig = True
         while needConfig:
             #self.topics = 'docker,devops,#F1,coreos,#AWS,@Docker,@awscloud,@LewisHamilton'
-            self.consul_uri = os.env('CONSUL_URI', 'localhost:8500')
-            self.twitter_access_token = self.consul_get('apps/inkslinger/twitter_access_token').json()
+            self.topics = os.getenv('TOPCIS', False)
+            self.logger.debug("TOPICS: %s" % self.topics)
+            self.twitter_access_token = os.getenv('TWITTER_ACCESS_TOKEN', False)
             self.logger.debug("twitter_access_token: %s" % self.twitter_access_token)
-            self.twitter_access_secret = self.consul_get('apps/inkslinger/twitter_access_secret').json()
+            self.twitter_access_secret = os.getenv('TWITTER_ACCESS_SECRET', False)
             self.logger.debug("twitter_access_secret: %s" % self.twitter_access_secret)
-            self.twitter_consumer_key = self.consul_get('apps/inkslinger/twitter_consumer_key').json()
+            self.twitter_consumer_key = os.getenv('TWITTER_CONSUMER_KEY', False)
             self.logger.debug("twitter_consumer_key: %s" % self.twitter_consumer_key)
-            self.twitter_consumer_secret = self.consul_get('apps/inkslinger/twitter_consumer_secret').json()
+            self.twitter_consumer_secret = os.getenv('TWITTER_CONSUMER_SECRET', False)
             self.logger.debug("twitter_consumer_secret: %s" % self.twitter_consumer_secret)
+            self.giles_endpoint = os.getenv("GILES_ENDPOINT", 'http://giles/v1/')
+            self.logger.debug("giles_endpoint: %s" % self.giles_endpoint)
             err = self._check_health()
             if len(err) > 0:
                 for error in err:
@@ -51,40 +53,37 @@ class TwitterConsumer:
         Report Missing Settings to logger
         """
         err = []
-        if self.twitter_access_token == '':
+        if self.topics:
+            err.append("Missing Topics to Monitor")
+        if self.twitter_access_token:
             err.append("Missing twitter_access_token")
-        if self.twitter_access_secret == '':
+        if self.twitter_access_secret:
             err.append("Missing twitter_access_secret")
-        if self.twitter_consumer_key == '':
+        if self.twitter_consumer_key:
             err.append("Missing twitter_consumer_key")
-        if self.twitter_consumer_secret == '':
+        if self.twitter_consumer_secret:
             err.append("Missing twitter_consumer_secret")
+        if self.giles_endpoint:
+            err.append("Missing Giles API Endpoint")
         return err
 
-    def giles_get(self, resource, payload=None):
-        """ Perform HTTP GET request against a giles endpoint """
-        # Keeping with service discovery, ask consul for giles endpoint
-        # maybe some kind of wait-lock here?  incase no active giles endpoints?
-        giles_endpoints = self.consul_get('service/giles').json()
-        self.logger.debug("giles_endpoints: %s" % giles_endpoints)
-        self.logger.debug("len(giles_endpoints): %s" % len(giles_endpoints))
-        payload = payload or {}
-        endpoint = '{}/{}/{}'.format(, 'v1', resource)
-        result = requests.get(
-            endpoint,
-            params=payload,
-            headers={'Accept': 'application/json; version=1'})
 
-
-    def consul_get(self, resource, payload=None):
-        """ Perform HTTP GET request against consul endpoint """
-        payload = payload or {}
-        endpoint = '{}/{}/{}'.format(self.consul_uri, 'v1', resource)
-        self.logger.debug("Consule: GET %s" % endpoint)
-        return requests.get(
-            endpoint,
-            params=payload,
-            headers={'Accept': 'application/vnd.consul+json; version=1'})
+    def _save_mongo(self, tweet):
+        """
+        Save Tweet to MongoDB via Giles API
+        """
+        headers = {'user-agent': 'inkslinger/0.0.1'}
+        self.logger.debug("Saving Tweet....")
+        self.logger.debug(tweet)
+        url = "%s/%s" % (self.giles_endpoint, 'posts')
+        self.logger.debug("Sending data to %s [PUT]" % url)
+        r = requests.post(url, json=tweet, headers=headers)
+        if r.status_code == 200:
+            return True
+        else:
+            self.logger.info("Error Saving Tweet")
+            self.logger.info("[%s] - %s" % (status_code, r.raise_for_status()))
+            return False
 
 
     def process_tweets(self):
@@ -101,7 +100,9 @@ class TwitterConsumer:
 
         print "Processing Tweets"
         for tweet in tweets:
-            self.logger.info("Processing Tweet")
+            while self._save_mongo(tweet):
+                self.logger.info("Processing Tweet")
+
 
 
 def main():
