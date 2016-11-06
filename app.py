@@ -66,8 +66,6 @@ class TwitterConsumer:
             err.append("Missing twitter_consumer_key")
         if self.twitter_consumer_secret:
             err.append("Missing twitter_consumer_secret")
-        if self.giles_endpoint:
-            err.append("Missing Giles API Endpoint")
         return err
 
 
