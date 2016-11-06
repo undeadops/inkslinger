@@ -21,9 +21,8 @@ class TwitterConsumer:
         handler.setFormatter(formatter)
         self.logger.addHandler(handler)
 
-        loglevel = os.getenv('LOG_LEVEL', 'info')
-
-        self.logger.setLevel(logging.DEBUG)
+        loglevel = os.environ.get("LOG_LEVEL", logging.INFO)
+        self.logger.setLevel(loglevel)
 
         needConfig = True
         while needConfig:
