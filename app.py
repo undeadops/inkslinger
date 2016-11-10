@@ -96,7 +96,7 @@ class TwitterConsumer:
 
         print "Processing Tweets"
         for tweet in tweets:
-            self._save_mongo(tweet):
+            self._save_mongo(tweet)
             self.logger.info("Processing Tweet")
 
 
