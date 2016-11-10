@@ -76,12 +76,9 @@ class TwitterConsumer:
         url = "%s/%s" % (self.giles_endpoint, 'posts')
         self.logger.debug("Sending data to %s [PUT]" % url)
         r = requests.post(url, json=tweet, headers=headers)
-        if r.status_code == 200 or r.status_code == 201:
-            return True
-        else:
+        if r.status_code != 201:
             self.logger.info("Error Saving Tweet")
             self.logger.info("[%s] - %s" % (r.status_code, r.raise_for_status()))
-            return False
 
 
     def process_tweets(self):
@@ -98,8 +95,8 @@ class TwitterConsumer:
 
         print "Processing Tweets"
         for tweet in tweets:
-            while self._save_mongo(tweet):
-                self.logger.info("Processing Tweet")
+            self._save_mongo(tweet)
+            self.logger.info("Processing Tweet")
 
 
 
