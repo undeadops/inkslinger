@@ -1,0 +1,56 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: inkslinger
+spec:
+  replicas: 1
+  minReadySeconds: 5
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: inkslinger
+        tier: streamer
+        env: prod
+    spec:
+      containers:
+      - name: inkslinger
+        image: undeadops/inkslinger:v0.2
+        imagePullPolicy: Always
+        env:
+          - name: DEBUG
+            value: True
+          - name: PORT
+            valueFrom:
+              secretKeyRef:
+                name: inkslinger-v1
+                key: port
+          - name: TWITTER_ACCESS_KEY
+            valueFrom:
+              secretKeyRef:
+                name: inkslinger-v1
+                key: twitter_access_key
+          - name: TWITTER_ACCESS_SECRET
+            valueFrom:
+              secretKeyRef:
+                name: inkslinger-v1
+                key: twitter_access_secret
+          - name: TWITTER_CONSUMER_KEY
+            valueFrom:
+              secretKeyRef:
+                name: inkslinger-v1
+                key: twitter_consumer_key
+          - name: TWITTER_CONSUMER_SECRET
+            valueFrom:
+              secretKeyRef:
+                name: inkslinger-v1
+                key: twitter_consumer_secret
+        resources:
+          limits:
+            cpu:  1000m
+            memory: 180Mi
+          requests:
+            cpu:  500m
+            memory: 180Mi
+
