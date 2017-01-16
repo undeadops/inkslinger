@@ -20,7 +20,6 @@ spec:
         imagePullPolicy: Always
         env:
           - name: DEBUG
-            value: True
           - name: PORT
             valueFrom:
               secretKeyRef:
@@ -53,4 +52,3 @@ spec:
           requests:
             cpu:  500m
             memory: 180Mi
-
