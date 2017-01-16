@@ -14,7 +14,7 @@ except ImportError:
     import simplejson as json
 
 # version
-version = '0.2'
+version = '0.2.1'
 
 # wrap the flask app and give a heathcheck url
 #health = HealthCheck(app, "/healthz")
@@ -48,13 +48,13 @@ class TwitterConsumer:
         while needConfig:
             self.topics_endpoint = os.getenv('TOPICS_ENDPOINT', "http://giles:5000/v1")
 
-            self.twitter_access_key = os.getenv('TWITTER_ACCESS_KEY', False)
+            self.twitter_access_key = os.getenv('TWITTER_ACCESS_KEY', False).rstrip("\n")
             self.logger.debug("twitter_access_key: %s" % self.twitter_access_key)
-            self.twitter_access_secret = os.getenv('TWITTER_ACCESS_SECRET', False)
+            self.twitter_access_secret = os.getenv('TWITTER_ACCESS_SECRET', False).rstrip("\n")
             self.logger.debug("twitter_access_secret: %s" % self.twitter_access_secret)
-            self.twitter_consumer_key = os.getenv('TWITTER_CONSUMER_KEY', False)
+            self.twitter_consumer_key = os.getenv('TWITTER_CONSUMER_KEY', False).rstrip("\n")
             self.logger.debug("twitter_consumer_key: %s" % self.twitter_consumer_key)
-            self.twitter_consumer_secret = os.getenv('TWITTER_CONSUMER_SECRET', False)
+            self.twitter_consumer_secret = os.getenv('TWITTER_CONSUMER_SECRET', False).rstrip("\n")
             self.logger.debug("twitter_consumer_secret: %s" % self.twitter_consumer_secret)
             self.giles_endpoint = os.getenv("GILES_ENDPOINT", 'http://giles:5000/v1')
             self.logger.debug("giles_endpoint: %s" % self.giles_endpoint)
