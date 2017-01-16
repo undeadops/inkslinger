@@ -1,3 +1,5 @@
+inkslinger-secrets.yaml
+
 *.pyc
 
 env.yml
