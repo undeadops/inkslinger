@@ -132,7 +132,6 @@ class TwitterConsumer:
         """
         Process Twitter Stream API
         """
-        # This could be multi-threaded?
         oauth = OAuth(self.twitter_access_key, self.twitter_access_secret,
                       self.twitter_consumer_key, self.twitter_consumer_secret)
         self.logger.info("Authenticating to Twitter")
@@ -142,6 +141,7 @@ class TwitterConsumer:
 
         print "Processing Tweets"
         for tweet in tweets:
+            # This could be threaded to minimize delay
             self._save_mongo(tweet)
             self.logger.info("Processing Tweet")
 
