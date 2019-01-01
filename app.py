@@ -1,4 +1,6 @@
 #!/usr/bin/env python
+from kafka import KafkaProducer
+
 from twitter import Twitter, OAuth, TwitterHTTPError, TwitterStream
 #from flask import Flask, request, jsonify, abort, make_response, json
 import sys
@@ -61,9 +63,9 @@ class TwitterConsumer:
 
             # Fetch topics
             self.logger.info("Fetching Topics from Endpoint: %s" % self.topics_endpoint)
-            num_topics = self._get_topics()
-            self.logger.info("TOPICS[%s]: %s" % (num_topics,self.topics))
-
+            #num_topics = self._get_topics()
+            #self.logger.info("TOPICS[%s]: %s" % (num_topics,self.topics))
+            self.topics = os.getenv('TOPICS').rstrip("\n")
             err = self._check_health()
             if len(err) > 0:
                 for error in err:
@@ -140,10 +142,13 @@ class TwitterConsumer:
         tweets = twitter_stream.statuses.filter(track=self.topics, language="en")
 
         print "Processing Tweets"
+        producer = KafkaProducer(bootstrap_servers=['localhost:9092'], value_serializer=lambda m: json.dumps(m).encode('ascii'))
         for tweet in tweets:
             # This could be threaded to minimize delay
-            self._save_mongo(tweet)
+            #self._save_kafka(tweet)
+            producer.send("foobar", tweet)
             self.logger.info("Processing Tweet")
+        producer.Close(30)
 
 
 def main():
